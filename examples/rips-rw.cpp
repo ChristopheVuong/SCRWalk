@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
     
     K k;
      //save it to file
-    cnpy::npy_save("points.npy",&points[0],{N_V}, "w");
+    // cnpy::npy_save("points.npy",&points[0],{N_V}, "w");
     // export points to a .xyz file (xy here), then process in Python with pandas 
     // std::vector<Point_d> results;
     // Gudhi::subsampling::pick_n_random_points(points, 100, std::back_inserter(results));
