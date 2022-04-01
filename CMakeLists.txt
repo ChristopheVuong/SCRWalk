@@ -73,7 +73,7 @@ include_directories(${GUDHI_INCLUDE_DIRS})
 # Add a library with the above sources
 # Add sub directories
 add_subdirectory(rw)
-# add_subdirectory(laplacian)
+add_subdirectory(laplacian)
 # add subdirectory binary executable
 add_subdirectory(examples)
 

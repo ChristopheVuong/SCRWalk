@@ -82,8 +82,6 @@ Chain RWZchains::updateChain()
             }
         }
     }
-
-    
     // the chain contains all the visited simplices with their weights (can be 0)
     return next_chain;
 }
@@ -150,6 +148,7 @@ void RWZchains::runSA(float T0, float alpha, std::string name_file)
         }
         T = T * alpha; // T = T0 / std::log(m)
     }
+    file.close();
 }
 
 // A way to see the gap of energy

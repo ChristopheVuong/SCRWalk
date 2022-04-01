@@ -18,6 +18,7 @@
 #include <limits>  // for std::numeric_limits
 
 #include "rwchains.h"
+#include "laplacian.h"
 
 #include <chrono>
 
@@ -29,10 +30,10 @@ int main(int argc, char **argv) {
     // ----------------------------------------------------------------------------
     // Parameters of complex and paths to results
     // ----------------------------------------------------------------------------
-    const int N_V = 500; // Number of vertices before sampling
+    const int N_V = 50; // Number of vertices before sampling
     const double HOLE_RADIUS = 0.3; // radius of the holes in the point clouds in [-1, 1]
-    const std::string POINTS_FILENAME = "Points-Rips-SA";
-    const std::string RESULT_FILENAME = "Rips-SA";
+    const std::string POINTS_FILENAME = "Points-Rips-SA-Lap";
+    const std::string RESULT_FILENAME = "Rips-SA-Lap";
     // const std::string RESULT_FILENAME = "Rips_SA";
     // using Simplex_tree = Gudhi::Simplex_tree<Gudhi::Simplex_tree_options_fast_persistence>;    
     // using Point = std::vector<double>;
@@ -151,50 +152,38 @@ int main(int argc, char **argv) {
     //     std::clog << std::endl;
     // }
     // ----------------------------------------------------------------------------
-    // Init a random walk object
+    // Init a random walk object with null basis of Laplacian
     // ----------------------------------------------------------------------------
-    // find a subset of edges
-    std::set<Simplex_tree::Simplex_handle> c0 = {};
-    int num_edges = 0;
-    for(auto e : stree.skeleton_simplex_range(1))
-    {
-        if ((stree.dimension(e) == 1) && (num_edges < 5))
-        {
-            c0.insert(e);
-            num_edges++;
-        }
-    }
-
-    // ----------------------------------------------------------------------------
-    // Init a random walk object with the intersection of convex hulls and edges
-    // ----------------------------------------------------------------------------
-
-    // convex hull of the points or alpha shape
-    // c0.insert(stree.find({3, 2})); 
-    // c0.insert(stree.find({4, 3})); 
-    // c0.insert(stree.find({6, 4})); 
-    // c0.insert(stree.find({6, 2})); 
-    // alpha shape?
-
-    // ----------------------------------------------------------------------------
-    // Walk
-    // ----------------------------------------------------------------------------
-    // Get starting timepoint
     auto start = std::chrono::high_resolution_clock::now();
 
+    fmpz_mat_t null_basis;
+    get_null_space_laplacian1(stree, null_basis);
 
-    RWZ2chains rwZ2 (stree, c0);
-    // rwZ2.run(N_STEPS, RESULT_FILENAME);
-    rwZ2.runSA(T0, alpha, RESULT_FILENAME);
+
     auto stop = std::chrono::high_resolution_clock::now();
-    
-    // Get duration. Substart timepoints to
-    // get duration. To cast it to proper unit
-    // use duration cast method
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
  
     std::cout << "Time taken by the random walk: "
          << duration.count() << " microseconds" << std::endl;
+    // ----------------------------------------------------------------------------
+    // Walk
+    // ----------------------------------------------------------------------------
+    // Get starting timepoint
+    // auto start = std::chrono::high_resolution_clock::now();
+
+
+    // // RWZ2chains rwZ2 (stree, c0);
+    // // // rwZ2.run(N_STEPS, RESULT_FILENAME);
+    // // rwZ2.runSA(T0, alpha, RESULT_FILENAME);
+    // auto stop = std::chrono::high_resolution_clock::now();
+    
+    // // Get duration. Substart timepoints to
+    // // get duration. To cast it to proper unit
+    // // use duration cast method
+    // auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+ 
+    // std::cout << "Time taken by the random walk: "
+    //      << duration.count() << " microseconds" << std::endl;
 
     return 0;
 }

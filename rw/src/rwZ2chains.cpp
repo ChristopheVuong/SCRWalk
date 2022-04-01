@@ -75,7 +75,6 @@ void RWZ2chains::writeChain(std::set<ST::Simplex_handle> c, std::ofstream &file)
     }
 
     file << "]" << std::endl;
-    file << std::endl;
 
 }
 
@@ -99,15 +98,14 @@ void RWZ2chains::run(int n_steps, std::string name_file)
 
 // Simulated annealing random walk
 void RWZ2chains::runSA(float T0, float alpha, std::string name_file)
-
 {
     std::ofstream file(name_file);
     writeChain(this->chain, file);
     float T = T0;
     while (T > 1)
     {
-        std::set<ST::Simplex_handle> tau_prime = makeTransition();
         std::set<ST::Simplex_handle> out;
+        std::set<ST::Simplex_handle> tau_prime = makeTransition();
         // std::set_symmetric_difference(this->chain.begin(), this->chain.end(), next_chain.begin(), next_chain.end(), std::back_inserter(out)); // not the right symmetric difference
         std::set_symmetric_difference(this->chain.begin(), this->chain.end(), tau_prime.begin(), tau_prime.end(), std::inserter(out, out.end()));
         int delta_U = diffLength(out); // can be another type of energy gap
@@ -125,6 +123,7 @@ void RWZ2chains::runSA(float T0, float alpha, std::string name_file)
         }
         T = T * alpha; // T = T0 / std::log(m) // cooling rate for probabilty convergence in SA
     }
+    file.close();
 }
 
 // A way to see the gap of energy

@@ -64,7 +64,7 @@ project(RW)
 # include_directories(${GUDHI_INCLUDE_DIRS})
 
 
-add_library(${PROJECT_NAME} src/rwZ2chains.cpp src/rwZchains.cpp)
+add_library(${PROJECT_NAME} src/rwZ2chains.cpp src/rwZchains.cpp src/contourEdges.cpp)
 add_library(sub::librw ALIAS ${PROJECT_NAME})
 
 # target_link_libraries(${PROJECT_NAME} ${CGAL_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY})
