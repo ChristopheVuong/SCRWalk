@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.0.0)
 project(LAPLACIAN)
 
 
-add_library(${PROJECT_NAME} src/laplacian.cpp)
+# add_library(${PROJECT_NAME} src/laplacian.cpp)
+add_library(${PROJECT_NAME} src/laplacian_flint.cpp)
 
 #### Flint dependency (for Smith normal form) ####
 # SET(CMAKE_FIND_LIBRARY_PREFIXES "lib")

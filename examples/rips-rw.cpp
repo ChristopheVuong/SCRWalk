@@ -31,8 +31,11 @@ int main(int argc, char **argv) {
     // ----------------------------------------------------------------------------
     const int N_V = 500; // Number of vertices before sampling
     const double HOLE_RADIUS = 0.3; // radius of the holes in the point clouds in [-1, 1]
-    const std::string POINTS_FILENAME = "Points-Rips-SA";
+    const std::string POINTS_FILENAME = "Points-Rips";
+    const std::string EDGES_FILENAME = "Edges-Rips";
+    const std::string TRIANGLES_FILENAME = "Triangles-Rips";
     const std::string RESULT_FILENAME = "Rips-SA";
+    const std::string SARESULT_FILENAME = "Rips-SA";
     // const std::string RESULT_FILENAME = "Rips_SA";
     // using Simplex_tree = Gudhi::Simplex_tree<Gudhi::Simplex_tree_options_fast_persistence>;    
     // using Point = std::vector<double>;
@@ -158,13 +161,45 @@ int main(int argc, char **argv) {
     int num_edges = 0;
     for(auto e : stree.skeleton_simplex_range(1))
     {
-        if ((stree.dimension(e) == 1) && (num_edges < 5))
+        if (num_edges == 5) 
+        {
+            break;
+        }
+        
+        if ((stree.dimension(e) == 1))
         {
             c0.insert(e);
             num_edges++;
         }
     }
 
+    // ----------------------------------------------------------------------------
+    // Store the edges and the triangles in a text file
+    // ----------------------------------------------------------------------------
+    std::ofstream file_edges(EDGES_FILENAME);
+    std::ofstream file_triangles(TRIANGLES_FILENAME);
+    for(auto sh : stree.skeleton_simplex_range(2))
+    {
+        if (stree.dimension(sh) == 1)
+        {
+            file_edges << "( ";
+            for (auto vertex : stree.simplex_vertex_range(sh))
+            {
+                file_edges << vertex << " "; // space between the vertices
+            }
+            file_edges << ")";
+        }
+
+        if (stree.dimension(sh) == 2)
+        {
+            file_triangles << "( ";
+            for (auto vertex : stree.simplex_vertex_range(sh))
+            {
+                file_edges << vertex << " "; // space between the vertices
+            }
+            file_triangles << ")";
+        }
+    }
     // ----------------------------------------------------------------------------
     // Init a random walk object with the intersection of convex hulls and edges
     // ----------------------------------------------------------------------------
@@ -184,8 +219,8 @@ int main(int argc, char **argv) {
 
 
     RWZ2chains rwZ2 (stree, c0);
-    // rwZ2.run(N_STEPS, RESULT_FILENAME);
-    rwZ2.runSA(T0, alpha, RESULT_FILENAME);
+    rwZ2.run(N_STEPS, RESULT_FILENAME);
+    
     auto stop = std::chrono::high_resolution_clock::now();
     
     // Get duration. Substart timepoints to
@@ -195,6 +230,16 @@ int main(int argc, char **argv) {
  
     std::cout << "Time taken by the random walk: "
          << duration.count() << " microseconds" << std::endl;
+
+    start = std::chrono::high_resolution_clock::now();
+    
+    RWZ2chains rwZ2SA (stree, c0);
+    rwZ2SA.runSA(T0, alpha, SARESULT_FILENAME);
+
+    stop = std::chrono::high_resolution_clock::now();
+
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
 
     return 0;
 }

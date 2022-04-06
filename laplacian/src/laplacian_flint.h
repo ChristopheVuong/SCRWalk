@@ -5,7 +5,10 @@
 #include <gudhi/Simplex_tree.h>
 using ST = Gudhi::Simplex_tree<>;
 
+
 #include <utility>      // std::pair, std::make_pair
+#include <boost/bimap.hpp>
+#include <tuple>
 #include <cstdio>
 #include "fmpz_matxx.h"
 #include "fmpzxx.h"
@@ -29,18 +32,19 @@ std::pair<int,int> compute_boundary_matrix(ST stree, const int k, fmpz_mat_t bou
  * @param k the dimension of the boundary matrix
  * @param boundarykplus the boundary of order k+1 to build
  * @param boundaryk the boundary of order k to build
- * @return int 
+ * @return a tuple of ints giving the size of the boundary matrices 
  */
-int compute_boundary_matrices(ST stree, const int k, fmpz_mat_t boundarykplus, fmpz_mat_t boundaryk);
+std::tuple<int, int, int> compute_boundary_matrices(ST stree, const int k, fmpz_mat_t boundarykplus, fmpz_mat_t boundaryk);
 
 /**
  * @brief Set the Laplacian of order k given the boundary matrices by matrix multiplication
  * 
- * @param boundaryk the computed boundary matrix of order k
- * @param boundarykplus the computed boundary matrix of order k+1
+ * @param boundaryk the boundary matrix of order k to compute
+ * @param boundarykplus the boundary matrix of order k+1 to compute
+ * @param shape the number of rows and columns of the boundary matrices
  * @param laplacian the matrix to store the Laplacian
  */
-void set_laplaciank(fmpz_mat_t boundaryk, fmpz_mat_t boundarykplus, fmpz_mat_t laplacian);
+void set_laplaciank(fmpz_mat_t boundaryk, fmpz_mat_t boundarykplus, std::tuple<int,int,int> shape, fmpz_mat_t laplacian);
 
 
 /**

@@ -23,6 +23,11 @@ include_directories("${CMAKE_SOURCE_DIR}/laplacian/src")
 target_link_libraries(${PROJECT_NAME}
     sub::librw
 )
+
+target_link_libraries(${PROJECT_NAME}int
+    sub::librw
+)
+
 target_link_libraries(${PROJECT_NAME}int
     sub::liblaplacian
 )

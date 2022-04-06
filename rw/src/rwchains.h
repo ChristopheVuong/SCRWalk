@@ -14,6 +14,7 @@
 #include <utility>
 // #include <boost/program_options.hpp>
 // #include <CGAL/Epick_d.h>
+#include <boost/program_options.hpp>
 #include <gudhi/Simplex_tree.h>
 
 // struct MyOptions : Gudhi::Simplex_tree_options_full_featured
@@ -89,7 +90,7 @@ struct Chain
     std::list<int> weights; // list of weights
 };
 
-int computeEnergy(Chain c);
+
 
 class RWZchains 
 /**
@@ -99,13 +100,22 @@ class RWZchains
 {
 private:
     ST stree;
-    Chain chain; 
+    // Chain chain; 
+    std::map<ST::Simplex_handle, int> chain;
     Chain c0; // initial chain of simplices
     std::map<ST::Simplex_handle, std::vector<ST::Simplex_handle >> coface_dictionary; // map a simplex to the next possible simplex in the chain
 
 public:
     
-    RWZchains(ST st, Chain c0);
+    RWZchains(ST st, std::map<ST::Simplex_handle, int> c0);
+
+    /**
+     * @brief Computes the energy of the chain
+     * 
+     * @param c 
+     * @return int the energy
+     */
+    int computeEnergy(std::map<ST::Simplex_handle, int> c);
     
     /**
      * @brief Makes a transition in the simplex tree to another chain.
