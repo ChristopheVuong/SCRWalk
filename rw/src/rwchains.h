@@ -80,15 +80,15 @@ public:
     int diffLength(std::set<ST::Simplex_handle>  c);
 };
 
-/**
- * @brief A structure for finite-length chains with integer weights
- * 
- */
-struct Chain 
-{
-    std::list<ST::Simplex_handle> simplices; // list of simplices in the chain
-    std::list<int> weights; // list of weights
-};
+// /**
+//  * @brief A structure for finite-length chains with integer weights
+//  * 
+//  */
+// struct Chain 
+// {
+//     std::list<ST::Simplex_handle> simplices; // list of simplices in the chain
+//     std::list<int> weights; // list of weights
+// };
 
 
 
@@ -101,13 +101,13 @@ class RWZchains
 private:
     ST stree;
     // Chain chain; 
-    std::map<ST::Simplex_handle, int> chain;
-    Chain c0; // initial chain of simplices
+    std::map<ST::Simplex_handle, long> chain;
+    std::map<ST::Simplex_handle, long>  c0; // initial chain of simplices
     std::map<ST::Simplex_handle, std::vector<ST::Simplex_handle >> coface_dictionary; // map a simplex to the next possible simplex in the chain
 
 public:
     
-    RWZchains(ST st, std::map<ST::Simplex_handle, int> c0);
+    RWZchains(ST st, std::map<ST::Simplex_handle, long> c0);
 
     /**
      * @brief Computes the energy of the chain
@@ -115,18 +115,18 @@ public:
      * @param c 
      * @return int the energy
      */
-    int computeEnergy(std::map<ST::Simplex_handle, int> c);
+    int computeEnergy(std::map<ST::Simplex_handle, long> c);
     
     /**
      * @brief Makes a transition in the simplex tree to another chain.
      * @return The possible chain to transition to
      */
-    Chain updateChain();
+    std::map<ST::Simplex_handle, long>  updateChain();
     
     /**
      * @brief Writes the chain in a text file to decode and plot in Python.
      */
-    void writeChain(Chain chain, std::ofstream &file);
+    void writeChain(std::map<ST::Simplex_handle, long> chain, std::ofstream &file);
     
     /**
      * @brief Runs the random walk given the initialization by the constructor and writes the progress in a file
@@ -147,7 +147,7 @@ public:
      * @param c the chain to examine (for SA)
      * @return the difference of length between the current chain and the parameter c
      */
-    int diffWeight(Chain c);
+    long diffWeight(std::map<ST::Simplex_handle, long>  c);
 };
 
 #endif //RWCHAINS_H

@@ -187,8 +187,9 @@ int main(int argc, char **argv) {
             {
                 file_edges << vertex << " "; // space between the vertices
             }
-            file_edges << ")";
+            file_edges << ")\n";
         }
+
 
         if (stree.dimension(sh) == 2)
         {
@@ -197,9 +198,12 @@ int main(int argc, char **argv) {
             {
                 file_edges << vertex << " "; // space between the vertices
             }
-            file_triangles << ")";
+            file_triangles << ")\n";
         }
+
     }
+    file_edges.close();
+    file_triangles.close();
     // ----------------------------------------------------------------------------
     // Init a random walk object with the intersection of convex hulls and edges
     // ----------------------------------------------------------------------------

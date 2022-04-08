@@ -121,7 +121,7 @@ void RWZ2chains::runSA(float T0, float alpha, std::string name_file)
             this->chain = out;
             writeChain(this->chain, file);
         }
-        T = T * alpha; // T = T0 / std::log(m) // cooling rate for probabilty convergence in SA
+        T *= alpha; // T = T0 / std::log(m) // cooling rate for probabilty convergence in SA
     }
     file.close();
 }

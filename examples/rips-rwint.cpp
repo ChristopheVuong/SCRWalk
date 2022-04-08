@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
     // Choose one column of the matrix of null basis
     const int IDX_ELEMENT = 0;
     // Create a initial chain of edges
-    Chain c0 = {};
+    std::map<ST::Simplex_handle, long> c0 = {};
 
     int idx = 0;
     for (auto sh : stree.skeleton_simplex_range(1))
@@ -138,8 +138,7 @@ int main(int argc, char **argv) {
         {
             if (*fmpz_mat_entry(null_basis, idx, IDX_ELEMENT) != 0) 
             {
-                c0.simplices.push_back(sh);
-                c0.weights.push_back(*fmpz_mat_entry(null_basis, idx, IDX_ELEMENT));
+                c0.insert({sh, *fmpz_mat_entry(null_basis, idx, IDX_ELEMENT)});
             }
             idx ++; // beware exceed size of matrix
         }
@@ -148,7 +147,7 @@ int main(int argc, char **argv) {
     //     std::cout << w << std::endl;
     // }
 
-    // fmpz_mat_clear(null_basis);
+    fmpz_mat_clear(null_basis);
 
     // Initialize the random walk with that element and the weights corresponding to the coefficients in the column 
 
