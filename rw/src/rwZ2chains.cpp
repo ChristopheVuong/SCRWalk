@@ -13,9 +13,9 @@ std::set<ST::Simplex_handle> RWZ2chains::makeTransition()
     std::list<ST::Simplex_handle> candidates; // only need a forward list anyway
     candidates = {};
     // find the candidate simplexes, may be duplicates that put some weights on cofaces
+    std::vector<ST::Simplex_handle> cofaces_e;
     for (auto e : this->chain)
     {
-        std::list<ST::Simplex_handle> cofaces_e;
 
         // beware lot of recopies of lists
         if (this->coface_dictionary.count(e))
@@ -30,6 +30,7 @@ std::set<ST::Simplex_handle> RWZ2chains::makeTransition()
             std::copy(cofaces.begin(), cofaces.end(), std::back_inserter(cofaces_e));
         }
         candidates.insert(candidates.begin(), cofaces_e.begin(), cofaces_e.end());
+        cofaces_e.clear();
     }
     if (!candidates.empty()) {
         // find occurrences in candidates
@@ -102,6 +103,7 @@ void RWZ2chains::runSA(float T0, float alpha, std::string name_file)
     std::ofstream file(name_file);
     writeChain(this->chain, file);
     float T = T0;
+    float prob;
     while (T > 1)
     {
         std::set<ST::Simplex_handle> out;
@@ -109,18 +111,19 @@ void RWZ2chains::runSA(float T0, float alpha, std::string name_file)
         // std::set_symmetric_difference(this->chain.begin(), this->chain.end(), next_chain.begin(), next_chain.end(), std::back_inserter(out)); // not the right symmetric difference
         std::set_symmetric_difference(this->chain.begin(), this->chain.end(), tau_prime.begin(), tau_prime.end(), std::inserter(out, out.end()));
         int delta_U = diffLength(out); // can be another type of energy gap
-        float prob = 1;
+        prob = 1;
         if (delta_U >= 0)
         {
             prob = std::exp(-delta_U / T);
         }
         float u = (float)std::rand() / (float)RAND_MAX;
-        if (prob < u)
+        if (u < prob)
         {
             // symmetric difference between the current chain and the boundary of the chosen coface
             this->chain = out;
-            writeChain(this->chain, file);
+            
         }
+        writeChain(this->chain, file); // write chain even if it remains the same, takes some time actually
         T *= alpha; // T = T0 / std::log(m) // cooling rate for probabilty convergence in SA
     }
     file.close();

@@ -154,6 +154,8 @@ void get_null_space_laplacian1(ST stree, fmpz_mat_t null_basis)
    set_laplaciank(boundary1, boundary2, shape, laplacian);
    fmpz_mat_init(null_basis, n, n); // enumeration over the k-th simplex
    fmpz_mat_nullspace(null_basis, laplacian);
+
+   // free the space allocated for the matrix
    fmpz_mat_clear(boundary1);
    fmpz_mat_clear(boundary2);
    fmpz_mat_clear(laplacian);

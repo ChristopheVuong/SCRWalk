@@ -1,9 +1,14 @@
+#include <chrono>
+
+
+#include <iostream>
+#include <fstream>
+
 #include <gudhi/pick_n_random_points.h>
  
 #include <CGAL/Epick_d.h>
 #include <CGAL/Random.h>
-#include <iostream>
-#include <fstream>
+
 #include <vector>
 #include <iterator>
 
@@ -18,8 +23,8 @@
 #include <limits>  // for std::numeric_limits
 
 #include "rwchains.h"
+#include "contourEdges.h"
 
-#include <chrono>
 
 // #define CGAL_EIGEN3_ENABLED
 
@@ -27,14 +32,17 @@
 int main(int argc, char **argv) {   
 
     // ----------------------------------------------------------------------------
-    // Parameters of complex and paths to results
+    // Details of complex and paths to results
     // ----------------------------------------------------------------------------
-    const int N_V = 500; // Number of vertices before sampling
-    const double HOLE_RADIUS = 0.3; // radius of the holes in the point clouds in [-1, 1]
+    const int N_V = 300; // Number of vertices before sampling
+    const double HOLE_RADIUS = 0.25; // radius of the holes in the point clouds in [-1, 1]
+    // const double THRESHOLD = 0.6;
+    const double THRESHOLD = 0.3;
+  
     const std::string POINTS_FILENAME = "Points-Rips";
     const std::string EDGES_FILENAME = "Edges-Rips";
     const std::string TRIANGLES_FILENAME = "Triangles-Rips";
-    const std::string RESULT_FILENAME = "Rips-SA";
+    const std::string RESULT_FILENAME = "Rips";
     const std::string SARESULT_FILENAME = "Rips-SA";
     // const std::string RESULT_FILENAME = "Rips_SA";
     // using Simplex_tree = Gudhi::Simplex_tree<Gudhi::Simplex_tree_options_fast_persistence>;    
@@ -89,28 +97,30 @@ int main(int argc, char **argv) {
     
     CGAL::Random rd;
     
-    std::vector<Point_d> points;
+    std::vector<Point_d> points; // for the Rips complex
 
-    std::ofstream file_points(POINTS_FILENAME);
+    std::vector<Point_2> points2D; // for the convex hull
+
+    std::ofstream file_points(POINTS_FILENAME); // rewrites existing content
     for (int i = 0; i < N_V; ++i)
     {
         // points.push_back(Point_d(rd.get_double(-1., 1), rd.get_double(-1., 1),
         //                         rd.get_double(-1., 1), rd.get_double(-1., 1)));
         double x = rd.get_double(-1., 1);
         double y = rd.get_double(-1., 1);
-        // 2 holes: center (-0.5, -0.5) and center (0.5, 0.4)
-        if (((x + 0.5)*(x + 0.5) + (y + 0.5)*(y + 0.5) >= HOLE_RADIUS*HOLE_RADIUS) && ((x - 0.5) * (x - 0.5) + (y - 0.4)*(y - 0.4) >= HOLE_RADIUS*HOLE_RADIUS))
+        // 2 holes: center (-0.5, -0.45) and center (0.35, 0.4)
+        if (((x + 0.5)*(x + 0.5) + (y + 0.45)*(y + 0.45) >= HOLE_RADIUS*HOLE_RADIUS) && ((x - 0.35) * (x - 0.35) + (y - 0.4)*(y - 0.4) >= HOLE_RADIUS*HOLE_RADIUS))
         {
             // do not sample inside some predefined circles
+            // points.push_back(Point_d(x, y));
             points.push_back(Point_d(x, y));
+            points2D.push_back(Point_2(x, y)); // for the convex hull
             file_points << x << " " << y << std::endl; 
-        }
+        }   
     }
-    K k;
+    
     file_points.close();
-     //save it to file
-    // cnpy::npy_save("points.npy",&points[0],{N_V}, "w");
-    // export points to a .xyz file (xy here), then process in Python with pandas 
+    // K k;
     // std::vector<Point_d> results;
     // Gudhi::subsampling::pick_n_random_points(points, 100, std::back_inserter(results));
     // std::clog << "Before sparsification: " << points.size() << " points.\n";
@@ -120,8 +130,7 @@ int main(int argc, char **argv) {
     // Init a Rips complex from points
     // ----------------------------------------------------------------------------
     // double threshold = 12.0;
-    double threshold = 0.6;
-    Rips_complex rips_complex_from_points(points, threshold, Gudhi::Euclidean_distance());
+    Rips_complex rips_complex_from_points(points, THRESHOLD, Gudhi::Euclidean_distance());
     
     Simplex_tree stree;
     rips_complex_from_points.create_complex(stree, 2);
@@ -153,11 +162,65 @@ int main(int argc, char **argv) {
     //     }
     //     std::clog << std::endl;
     // }
+
+
+    // Then enumerate the edges that contains those points
+
+    // ----------------------------------------------------------------------------
+    // Store the edges and the triangles in a text file
+    // ----------------------------------------------------------------------------
+    std::ofstream file_edges(EDGES_FILENAME); // rewrites existing content
+    std::ofstream file_triangles(TRIANGLES_FILENAME); // rewrites existing content
+    for(auto sh : stree.skeleton_simplex_range(2))
+    {
+        if (stree.dimension(sh) == 1)
+        {
+            file_edges << "( ";
+            
+            for (auto vertex : stree.simplex_vertex_range(sh))
+            {
+                file_edges << vertex << " "; // space between the vertices
+            }
+            file_edges << ")" << std::endl;
+        }
+
+
+        if (stree.dimension(sh) == 2)
+        {
+            file_triangles << "( ";
+            for (auto vertex : stree.simplex_vertex_range(sh))
+            {
+                file_triangles << vertex << " "; // space between the vertices
+            }
+            file_triangles << ")" << std::endl;
+        }
+
+    }
+    file_edges.close();
+    file_triangles.close();
+
     // ----------------------------------------------------------------------------
     // Init a random walk object
     // ----------------------------------------------------------------------------
     // find a subset of edges
     std::set<Simplex_tree::Simplex_handle> c0 = {};
+    
+    // ----------------------------------------------------------------------------
+    // Init a random walk object with the intersection of convex hulls and edges
+    // ----------------------------------------------------------------------------
+
+    // std::vector<std::size_t> vertices_hull;
+    // get_vertices_convex_hull_2D(points2D, vertices_hull);
+    // std::cout << "The convex hull of size " << vertices_hull.size() << " contains vertices:"; 
+    // for (auto v : vertices_hull) 
+    // {
+    //     std::cout << v << " ";
+    // }
+    // std::cout << std::endl;
+    // int inHull;
+    // ----------------------------------------------------------------------------
+    // Build the initial chain
+    // ----------------------------------------------------------------------------
     int num_edges = 0;
     for(auto e : stree.skeleton_simplex_range(1))
     {
@@ -168,52 +231,23 @@ int main(int argc, char **argv) {
         
         if ((stree.dimension(e) == 1))
         {
+        //     inHull = 0;
+        //     for (auto vertex : stree.simplex_vertex_range(e))
+        //     {
+        //         if (std::count(vertices_hull.begin(), vertices_hull.end(), vertex)) {
+        //             inHull ++;
+        //         }
+        //     }
+        //     if (inHull == 2)
+        //     {
+        //         c0.insert(e);
+        //     }
             c0.insert(e);
             num_edges++;
         }
     }
 
-    // ----------------------------------------------------------------------------
-    // Store the edges and the triangles in a text file
-    // ----------------------------------------------------------------------------
-    std::ofstream file_edges(EDGES_FILENAME);
-    std::ofstream file_triangles(TRIANGLES_FILENAME);
-    for(auto sh : stree.skeleton_simplex_range(2))
-    {
-        if (stree.dimension(sh) == 1)
-        {
-            file_edges << "( ";
-            for (auto vertex : stree.simplex_vertex_range(sh))
-            {
-                file_edges << vertex << " "; // space between the vertices
-            }
-            file_edges << ")\n";
-        }
-
-
-        if (stree.dimension(sh) == 2)
-        {
-            file_triangles << "( ";
-            for (auto vertex : stree.simplex_vertex_range(sh))
-            {
-                file_edges << vertex << " "; // space between the vertices
-            }
-            file_triangles << ")\n";
-        }
-
-    }
-    file_edges.close();
-    file_triangles.close();
-    // ----------------------------------------------------------------------------
-    // Init a random walk object with the intersection of convex hulls and edges
-    // ----------------------------------------------------------------------------
-
-    // convex hull of the points or alpha shape
-    // c0.insert(stree.find({3, 2})); 
-    // c0.insert(stree.find({4, 3})); 
-    // c0.insert(stree.find({6, 4})); 
-    // c0.insert(stree.find({6, 2})); 
-    // alpha shape?
+    std::cout << c0.size() << " edges in the initial chain." << std::endl;
 
     // ----------------------------------------------------------------------------
     // Walk
@@ -227,13 +261,11 @@ int main(int argc, char **argv) {
     
     auto stop = std::chrono::high_resolution_clock::now();
     
-    // Get duration. Substart timepoints to
-    // get duration. To cast it to proper unit
-    // use duration cast method
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    // Get duration
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
  
     std::cout << "Time taken by the random walk: "
-         << duration.count() << " microseconds" << std::endl;
+         << duration.count() << " seconds" << std::endl;
 
     start = std::chrono::high_resolution_clock::now();
     
@@ -242,8 +274,9 @@ int main(int argc, char **argv) {
 
     stop = std::chrono::high_resolution_clock::now();
 
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-
+    duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
+    std::cout << "Time taken by the SA random walk: "
+         << duration.count() << " seconds" << std::endl;
 
     return 0;
 }

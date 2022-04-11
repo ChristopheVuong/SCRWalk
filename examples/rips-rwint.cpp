@@ -28,15 +28,15 @@
 int main(int argc, char **argv) {   
 
     // ----------------------------------------------------------------------------
-    // Parameters of complex and paths to results
+    // Details of simplicial complex and paths to results
     // ----------------------------------------------------------------------------
     const int N_V = 100; // Number of vertices before sampling
     const double HOLE_RADIUS = 0.3; // radius of the holes in the point clouds in [-1, 1]
+    const double THRESHOLD = 0.6;
+
     const std::string POINTS_FILENAME = "Points-Rips-SA-Lap";
     const std::string RESULT_FILENAME = "Rips-SA-Lap";
-    // const std::string RESULT_FILENAME = "Rips_SA";
-    // using Simplex_tree = Gudhi::Simplex_tree<Gudhi::Simplex_tree_options_fast_persistence>;    
-    // using Point = std::vector<double>;
+    // using Simplex_tree = Gudhi::Simplex_tree<Gudhi::Simplex_tree_options_fast_persistence>;
 
     // ----------------------------------------------------------------------------
     // Parameters of walk with or without the simulated annealing
@@ -87,9 +87,9 @@ int main(int argc, char **argv) {
             file_points << x << " " << y << std::endl; 
         }
     }
-    K k;
+    
     file_points.close();
-
+    // K k;
     // Gudhi::subsampling::pick_n_random_points(points, 100, std::back_inserter(results));
     // std::clog << "Before sparsification: " << points.size() << " points.\n";
     // std::clog << "After  sparsification: " << results.size() << " points.\n";
@@ -98,8 +98,7 @@ int main(int argc, char **argv) {
     // Init a Rips complex from points
     // ----------------------------------------------------------------------------
     // double threshold = 12.0;
-    double threshold = 0.6;
-    Rips_complex rips_complex_from_points(points, threshold, Gudhi::Euclidean_distance());
+    Rips_complex rips_complex_from_points(points, THRESHOLD, Gudhi::Euclidean_distance());
     
     Simplex_tree stree;
     rips_complex_from_points.create_complex(stree, 2);
@@ -120,13 +119,14 @@ int main(int argc, char **argv) {
     fmpz_mat_t null_basis;
     get_null_space_laplacian1(stree, null_basis); 
     auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
- 
-    std::cout << "Time taken for computing the Laplacian null space with Flint: "
-         << duration.count() << " microseconds" << std::endl;
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
     
-    // fmpz_mat_print_pretty(null_basis);
+    // Get duration
+    std::cout << "Time taken by the computation of the Laplacian null space with Flint: "
+         << duration.count() << " seconds" << std::endl;
+    
     // Choose one column of the matrix of null basis
+    // Loop on elements of the null space to see the difference ?
     const int IDX_ELEMENT = 0;
     // Create a initial chain of edges
     std::map<ST::Simplex_handle, long> c0 = {};
@@ -150,10 +150,8 @@ int main(int argc, char **argv) {
     fmpz_mat_clear(null_basis);
 
     // Initialize the random walk with that element and the weights corresponding to the coefficients in the column 
-
-    
     // ----------------------------------------------------------------------------
-    // Walk
+    // Random Walk
     // ----------------------------------------------------------------------------
     // Get starting timepoint
     start = std::chrono::high_resolution_clock::now();
@@ -164,13 +162,11 @@ int main(int argc, char **argv) {
     rwZ.runSA(T0, alpha, RESULT_FILENAME);
     stop = std::chrono::high_resolution_clock::now();
     
-    // Get duration. Substart timepoints to
-    // get duration. To cast it to proper unit
-    // use duration cast method
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    // Get duration
+    duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
  
-    std::cout << "Time taken by the random walk: "
-         << duration.count() << " microseconds" << std::endl;
+    std::cout << "Time taken by the SA random walk: "
+         << duration.count() << " seconds" << std::endl;
 
     return 0;
 }
